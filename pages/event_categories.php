@@ -1,43 +1,33 @@
 <?php 
-// requires
+// require and connect
 
 $category = (isset($_POST['category'])) ? strtolower(htmlspecialchars(trim($_POST['category']))) : '';
 $errorMsgs = array();
 $path = explode('/', $_SERVER['PHP_SELF']);
 $action = $path[count($path)-1];
 $id = isset($_GET['id']) ? $_GET['id'] : '';
+$categories = MDB::find('event_categories', array());
 $valid = true;
 $success = false;
 $validId= false;
 
-function _new(){
-	print '<h1>Add New Category</h1><hr>'.
-				'<div id="error_box">';
+function _edit($id=''){
+	$actionUrl = empty($id) ? 'event_categories.php' : 'event_categories.php?id='.$GLOBALS['id'].'';
+	$header = !empty($id) ? '<h1>Edit Category</h1><hr>' : '<h1> Add Category </h1>';
+	$value = (isset($GLOBALS['record']) && !$GLOBALS['success']) ? $GLOBALS['record']['name'] : '';
+	
+	print $header.'<div id="error_box">';
 	print_r((isset($GLOBALS['errorMsgs']) && !empty($GLOBALS['errorMsgs'])) ? implode('',$GLOBALS['errorMsgs']) : '');
-	print '<div>';
-	if($GLOBALS['success']){
-		print "<p class='alert alert-success'>Posted Successfully!</p>";	
-	}
-	print '<form method="post" action="event_categories.php">'.
-					'<label>Category Name</label>'.
-					'<input class="form-control" type="text" name="category"/>'.
-					'<button type="submit" class="btn btn-primary">Add</button>'.
-				'</form>';
-}
-
-function _edit(){
-	print '<h1>Edit Category</h1><hr>'.
-				'<div id="error_box">';
-	print_r((isset($GLOBALS['errorMsgs']) && !empty($GLOBALS['errorMsgs'])) ? implode('',$GLOBALS['errorMsgs']) : '');
-	print '<div>';
+	print '</div>';
 	if($GLOBALS['success']){
 		print "<p class='alert alert-success'>Updated Successfully!</p>";	
-	}
-	print '<form method="post" action="event_categories.php/edit?id='.$GLOBALS['id'].'">'.
+	} else {
+	print '<form method="post" action="'.$actionUrl.'">'.
 					'<label>Category Name</label>'.
-					'<input class="form-control" type="text" name="category"/>'.
+					'<input class="form-control" type="text" name="category" value="'.$value.'"/>'.
 					'<button type="submit" class="btn btn-primary">Add</button>'.
 				'</form>';
+	}
 }
 
 function _delete(){
@@ -63,7 +53,7 @@ if(!empty($id)){
 			$record = $resp['data']['rows'][0];
 		}
 	}	catch (MongoException $e) {
-		die('<p>Invalid Id, please try again!</p><a href="admin.php"><button> Try Again</button></a>');
+		die('<p>Invalid Id, please try again!</p><a href="event_categories.php"><button> Try Again</button></a>');
 	}	
 }
 
@@ -83,10 +73,10 @@ if(!empty($category) && $action != 'delete'){
 	}
 }
 
-// if valid, perform action on db
+// if valid, perform action on db 
 if(($valid && !empty($category))  || ($action == 'delete' && isset($_POST['delete']))){
 	// if edit mode, edit record
-	if($action == 'edit'){
+	if(!empty($id)){
 		$resp = MDB::update('event_categories', array('_id'=>$id), array('$set'=>array('name'=>$category)));
 	} elseif($action == 'delete'){
 		$resp = MDB::delete('event_categories', array('_id'=>$id));
@@ -115,7 +105,7 @@ if(($valid && !empty($category))  || ($action == 'delete' && isset($_POST['delet
 
 	<link type="text/css" rel="stylesheet" href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css'/>
 
-	<title>Add Staff</title>
+	<title>Add Categories</title>
 
 </head>
 
@@ -124,14 +114,19 @@ if(($valid && !empty($category))  || ($action == 'delete' && isset($_POST['delet
 <?php print $navbar ?>
 		<div class="row">
 			<div class="col-md-6 col-md-offset-3">
+<?php
+	foreach($categories['data']['rows'] as $category){
+		print $category['name'].' <a href="event_categories.php?id='.$category['_id'].'"><button class="btn btn-primary">Edit</button></a> <a href="event_categories.php/delete?id='.$category['_id'].'"><button class="btn btn-danger">delete</button></a><br>';	
+	}
+?>
 
 <?php
-if($validId && $action == 'edit'){
-	_edit();
+if($validId && $action != 'delete'){
+	_edit($id);
 } elseif($validId && $action == 'delete'){
 	_delete();
 } else {
-	_new();	
+	_edit();	
 }
 
 
