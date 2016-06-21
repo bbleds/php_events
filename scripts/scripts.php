@@ -67,4 +67,20 @@ function save($collectionName, $id, $action, $record){
 	return $success;
 }
 
+function getAdminOptions($success, $records, $page){
+	$html = '<div>';
+	if(!$success){	
+		foreach($records as $record){
+			if(isset($record['start_date'])){
+				$html .= '<p>'. $record['title'].' - '.date('m/d/Y',$record['start_date']->sec).' <a href="'.$page.'?id='.$record['_id'].'"><button class="btn btn-primary">Edit</button></a> <a href="'.$page.'/delete?id='.$record['_id'].'"><button class="btn btn-danger">delete</button></a><br></p>';	
+			} else {
+				$html .= '<p>'. $record['name'].' <a href="'.$page.'?id='.$record['_id'].'"><button class="btn btn-primary">Edit</button></a> <a href="'.$page.'/delete?id='.$record['_id'].'"><button class="btn btn-danger">delete</button></a><br></p>';		
+			}
+			
+		}
+	}
+	$html .= '</div>';
+	return $html;
+}
+
 ?>
