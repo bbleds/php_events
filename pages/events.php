@@ -1,7 +1,8 @@
 <?php
 // require and connect
 
-
+$eventsResp = MDB::find('event_project',array());
+$events = $eventsResp['data']['rows'];
 $categories_resp = MDB::find('event_categories',array());
 $event_categories = $categories_resp['data']['rows'];
 $error_msgs = array();
@@ -136,7 +137,12 @@ if ($valid && isset($_POST['event'])){
 	<?php print $navbar; ?>
 	<div class="row">
 		<div class="col-md-8 col-md-offset-2">
-			<h1>Events</h1>
+<?php
+print getAdminOptions($success, $events, 'events.php');
+?>
+		</div>
+		<div class="col-md-8 col-md-offset-2">
+			<h1>Save Events</h1>
 			<div id="error_box">
 <?php 
 if(!empty($error_msgs)){
