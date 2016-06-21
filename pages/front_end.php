@@ -1,5 +1,5 @@
 <?php 
-//connect and require
+// require and connect
 
 
 $categoriesResp = MDB::find('event_categories', array());
@@ -52,7 +52,7 @@ foreach($allCategories as $category){
 <?php 
 foreach($events as $event){
 
-if(isset($_POST['event']['filter'])){
+if(isset($_POST['event']['filter']) && !empty($_POST['event']['filter'])){
 	if(!in_array($_POST['event']['filter'], $event['categories'])){
 		continue;
 	}
