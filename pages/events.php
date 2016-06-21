@@ -3,10 +3,10 @@
 
 $eventsResp = MDB::find('event_project',array());
 $events = $eventsResp['data']['rows'];
-$categories_resp = MDB::find('event_categories',array());
-$event_categories = $categories_resp['data']['rows'];
-$error_msgs = array();
-$statuses = array('active','inactive');
+$categoriesResp = MDB::find('event_categories',array());
+$eventCategories = $categoriesResp['data']['rows'];
+$errorMsgs = array();
+$statuses = array('active'=>'active','inactive'=>'inactive');
 $path = explode('/', $_SERVER['PHP_SELF']);
 $action = $path[count($path)-1];
 $required_fields = array('title','status','start_date','end_date','categories');
@@ -16,7 +16,18 @@ $valid = true;
 $success = false;
 $collectionName = 'event_project';
 
+/**
+ * _edit()
+ *
+ * Prints elements for edit and add functionality
+ *
+ * @access public
+ *
+ * @return void
+ */
 function _edit(){
+	$collectionOne = isset($_POST['event']) ? $_POST['event'] : array(); 
+	$collectionTwo = $GLOBALS['eventToEdit'];
 	if($GLOBALS['success'] == true){
 		print '<div class="alert alert-success"><h4>Saved Successfully!</h4></div>';	
 	} else {
@@ -27,13 +38,13 @@ function _edit(){
 					'<label>Details</label>'.
 					'<textarea class="form-control" name="event[details]">'.get_existing_field('details').'</textarea>'.	
 					'<label>Status</label>'.
-					generate_select($GLOBALS['statuses'],'status').	
+					generate_select($GLOBALS['statuses'],'status', $collectionOne, $collectionTwo).	
 					'<label>Start Date</label>'.
 					'<input id="start_date" class="form-control" type="text" name="event[start_date]" value="'.get_existing_field('start_date').'" />'.
 					'<label>End Date</label>'.
 					'<input id="end_date" class="form-control" type="text" name="event[end_date]" value="'.get_existing_field('end_date').'" />'.
 					'<label>Event Category</label>';
-		foreach($GLOBALS['event_categories'] as $category){
+		foreach($GLOBALS['eventCategories'] as $category){
 			print generate_checkbox($category['_id'],$category['name']);
 		}	
 		print	'<button type="submit" class="btn btn-primary">Submit</button>'.
@@ -41,6 +52,15 @@ function _edit(){
 	}
 }
 
+/**
+ * _delete()
+ *
+ * Prints elemets for delete functionality
+ *
+ * @access public
+ *
+ * @return void
+ */
 function _delete(){
 	if($GLOBALS['success']){
 		print '<div class="alert alert-success">Removed Record Successfully</div>';
@@ -73,19 +93,19 @@ if(isset($_POST['delete'])){
 	if(!$resp['error']){
 		$success = true;
 	} else {
-		$error_msgs[] = '<p>There was a problem deleting that record, please try again!</p>';	
+		$errorMsgs[] = '<p>There was a problem deleting that record, please try again!</p>';	
 	}
 }
 
 // validate required fields
 foreach($required_fields as $field){
 	if(isset($_POST['event']) && (!isset($_POST['event'][$field]) || empty($_POST['event'][$field]))){
-		$error_msgs[] = "<p>Please enter $field!</p>";	
+		$errorMsgs[] = "<p>Please enter $field!</p>";	
 		$valid = false;	
 	} elseif(isset($_POST['event']['title']) && $field == 'title' && empty($id)){
 		$resp = MDB::find('event_project', array('title'=>$_POST['event']['title']));
 		if(!$resp['empty']){
-			$error_msgs[] = '<p> An event already exists with this title, please enter a different title!</p>';
+			$errorMsgs[] = '<p> An event already exists with this title, please enter a different title!</p>';
 			$valid = false;
 		}
 	}
@@ -109,7 +129,7 @@ if ($valid && isset($_POST['event'])){
 		$success = save($collectionName,$idToQuery, $action, $newRecord);
 		
 		if(!$success){
-			$error_msgs[] = '<p>There was a problem saving the record, please try again!</p>';	
+			$errorMsgs[] = '<p>There was a problem saving the record, please try again!</p>';	
 		}
 	}	
 }
@@ -138,15 +158,15 @@ if ($valid && isset($_POST['event'])){
 	<div class="row">
 		<div class="col-md-8 col-md-offset-2">
 <?php
-print getAdminOptions($success, $events, 'events.php');
+print get_admin_options($success, $events, 'events.php');
 ?>
 		</div>
 		<div class="col-md-8 col-md-offset-2">
 			<h1>Save Events</h1>
 			<div id="error_box">
 <?php 
-if(!empty($error_msgs)){
-	print implode('',$error_msgs);
+if(!empty($errorMsgs)){
+	print implode('',$errorMsgs);
 }
 ?>
 			</div>
@@ -162,7 +182,6 @@ if(!empty($error_msgs)){
 		</div>
 	</div>
 	</div>
-
 
 	<script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
 	<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
