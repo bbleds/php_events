@@ -1,5 +1,8 @@
 <?php 
-// required and connect
+require_once '../templates/navbar.php';
+require_once '../scripts/php/scripts.php';
+require_once '../../../tt4lib/src/class.MDB.php';
+MDB::connect('bentt4');
 
 $category = (isset($_POST['category'])) ? strtolower(htmlspecialchars(trim($_POST['category']))) : '';
 $errorMsgs = array();
@@ -10,6 +13,7 @@ $categories = MDB::find('event_categories', array());
 $valid = true;
 $success = false;
 $validId= false;
+$collectionName = 'event_categories';
 
 function _edit(){
 	$actionUrl = empty($GLOBALS['id']) ? 'event_categories.php' : 'event_categories.php?id='.$GLOBALS['id'].'';
@@ -39,25 +43,6 @@ function _delete(){
 						'<input type="hidden" name="delete" value="true">'.
 						'<button type="submit" class="btn btn-danger">Yes</button>'.
 					'</form>';
-	}
-}
-
-function save($id, $category, $action){
-	$success = true;
-
-	// if id exists, update record
-	if(!empty($id) && $action != 'delete'){
-		$resp = MDB::update('event_categories', array('_id'=>$id), array('$set'=>array('name'=>$category)));
-	} elseif($action != 'delete') {
-		// default
-		$resp = MDB::insert('event_categories', array('name'=>$category));	
-	}
-	
-	if(isset($resp) && $resp['error']){
-		$errorMsgs[] = '<p>Could not add category, please try again</p>';
-	} else {
-	
-	return $success;
 	}
 }
 
@@ -106,7 +91,8 @@ if(!empty($category) && $action != 'delete'){
 
 // if valid, perform action on db 
 if(($valid && !empty($category))  || ($action == 'delete' && isset($_POST['delete']))){
-	$success = save($id,$category,$action);
+	$newRecord = array('name'=>$category);
+	$success = save($collectionName,$id,$action,$newRecord);
 } 
 ?>
 
