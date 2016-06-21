@@ -1,15 +1,13 @@
 <?php 
-require_once '../templates/navbar.php';
-require_once '../scripts/php/scripts.php';
-require_once '../../../tt4lib/src/class.MDB.php';
-MDB::connect('bentt4');
+// require and connect
 
 $category = (isset($_POST['category'])) ? strtolower(htmlspecialchars(trim($_POST['category']))) : '';
 $errorMsgs = array();
 $path = explode('/', $_SERVER['PHP_SELF']);
 $action = $path[count($path)-1];
 $id = isset($_GET['id']) ? $_GET['id'] : '';
-$categories = MDB::find('event_categories', array());
+$categoriesResp = MDB::find('event_categories', array());
+$categories = $categoriesResp['data']['rows']; 
 $valid = true;
 $success = false;
 $validId= false;
@@ -17,10 +15,9 @@ $collectionName = 'event_categories';
 
 function _edit(){
 	$actionUrl = empty($GLOBALS['id']) ? 'event_categories.php' : 'event_categories.php?id='.$GLOBALS['id'].'';
-	$header = !empty($GLOBALS['id']) ? '<h1>Edit Category</h1><hr>' : '<h1> Save Category </h1>';
 	$value = (isset($GLOBALS['record']) && !$GLOBALS['success']) ? $GLOBALS['record']['name'] : '';
 	
-	print $header.'<div id="error_box">';
+	print '<div id="error_box">';
 	print_r((isset($GLOBALS['errorMsgs']) && !empty($GLOBALS['errorMsgs'])) ? implode('',$GLOBALS['errorMsgs']) : '');
 	print '</div>';
 	if($GLOBALS['success']){
@@ -118,13 +115,9 @@ if(($valid && !empty($category))  || ($action == 'delete' && isset($_POST['delet
 		<div class="row">
 			<div class="col-md-6 col-md-offset-3">
 <?php
-if(!$success){
-	foreach($categories['data']['rows'] as $category){
-		print $category['name'].' <a href="event_categories.php?id='.$category['_id'].'"><button class="btn btn-primary">Edit</button></a> <a href="event_categories.php/delete?id='.$category['_id'].'"><button class="btn btn-danger">delete</button></a><br>';	
-	}
-}
+print getAdminOptions($success, $categories ,'event_categories.php');
 ?>
-
+	<h1>Event Categories</h1>
 <?php
 if($validId && $action == 'delete'){
 	_delete();
