@@ -13,6 +13,15 @@ $success = false;
 $validId= false;
 $collectionName = 'event_categories';
 
+/**
+ * _edit()
+ *
+ * prints elements for edit and add functionality
+ *
+ * @access public
+ *
+ * @return void
+ */
 function _edit(){
 	$actionUrl = empty($GLOBALS['id']) ? 'event_categories.php' : 'event_categories.php?id='.$GLOBALS['id'].'';
 	$value = (isset($GLOBALS['record']) && !$GLOBALS['success']) ? $GLOBALS['record']['name'] : '';
@@ -31,6 +40,15 @@ function _edit(){
 	}
 }
 
+/**
+ * _delete()
+ *
+ * Prints elements for delete functionality
+ *
+ * @access public
+ *
+ * @return void
+ */
 function _delete(){
 	if($GLOBALS['success']){
 		print '<h4 class="alert alert-success">Deleted Category Successfully!</h4>';
@@ -68,7 +86,6 @@ if(isset($_POST['delete']) && $_POST['delete']){
 		}
 	}
 }
-
 
 // On post, be sure user provided a category
 if(empty($category) && isset($_POST['category']) && $action != 'delete'){
@@ -115,7 +132,7 @@ if(($valid && !empty($category))  || ($action == 'delete' && isset($_POST['delet
 		<div class="row">
 			<div class="col-md-6 col-md-offset-3">
 <?php
-print getAdminOptions($success, $categories ,'event_categories.php');
+print get_admin_options($success, $categories ,'event_categories.php');
 ?>
 	<h1>Event Categories</h1>
 <?php
@@ -124,11 +141,7 @@ if($validId && $action == 'delete'){
 } else {
 	_edit();	
 }
-
-
 ?>
-
-
 	<script type="text/javascript" src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
 	<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>	
 </body>
