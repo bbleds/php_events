@@ -1,14 +1,14 @@
 <?php
-// connect and require
+// require and connect
 
-$statuses = array('active','inactive');
-$event_category_names = array();
+
+$categories_resp = MDB::find('event_categories',array());
+$event_categories = $categories_resp['data']['rows'];
 $error_msgs = array();
+$statuses = array('active','inactive');
 $path = explode('/', $_SERVER['PHP_SELF']);
 $action = $path[count($path)-1];
 $required_fields = array('title','status','start_date','end_date','categories');
-$categories_resp = MDB::find('event_categories',array());
-$event_categories = $categories_resp['data']['rows'];
 $id = (isset($_GET['id'])) ? $_GET['id'] : '';
 $eventToEdit = '';
 $valid = true;
@@ -31,8 +31,8 @@ function _edit(){
 					'<label>End Date</label>'.
 					'<input id="end_date" class="form-control" type="text" name="event[end_date]" value="'.get_existing_field('end_date').'" />'.
 					'<label>Event Category</label>';
-		foreach($GLOBALS['event_category_names'] as $category){
-			print generate_checkbox($category);
+		foreach($GLOBALS['event_categories'] as $category){
+			print generate_checkbox($category['_id'],$category['name']);
 		}	
 		print	'<button type="submit" class="btn btn-primary">Submit</button>'.
 			'</form>';
@@ -57,7 +57,7 @@ function save($record){
 	if(!empty($GLOBALS['id'])){
 		$resp = MDB::update('event_project', array('_id'=>$GLOBALS['mongoId']), array('$set'=>$record));
 	} else {
-		// default
+	// default
 		$resp = MDB::insert('event_project', $record);
 	}
 	
@@ -68,58 +68,22 @@ function save($record){
 	}
 }
 
-function generate_select( $fields, $inputName, $collection=''){
-	$html = '<select class="form-control" name="event['.$inputName.']"><option value="">Select One</option>';
-	$selected = '';
-	foreach($fields as $field){
-		if(isset($_POST['event'][$inputName]) && $_POST['event'][$inputName] == $field){
-			$selected = 'selected="selected"';
-		} elseif(isset($GLOBALS['eventToEdit'][$inputName]) && $GLOBALS['eventToEdit'][$inputName] == $field){
-			$selected = 'selected="selected"';
-		}
-		$html .= !empty($collection) ? "<option value='.$collection[$field].' $selected>$field</option>" : "<option value='$field' $selected >$field</option>";
-	}
-	$html .='</select>';
-
-	return $html;
-}
-
-function generate_checkbox($fieldName){
-	$checked = (isset($_POST['event']['categories']) && in_array($fieldName, $_POST['event']['categories'])) ? 'checked="checked"' : '';
-	if(isset($_POST['event']['categories']) && in_array($fieldName, $_POST['event']['categories'])){
-		$checked = 'checked="checked"';
-	} elseif(isset($GLOBALS['eventToEdit']['categories']) && in_array($fieldName, $GLOBALS['eventToEdit']['categories'])){
-		$checked = 'checked="checked"';
-	}
-	$html = '<label class="form-control"> '.$fieldName.' <input type="checkbox" name="event[categories][]" value="'.$fieldName.'" '.$checked.' /></label>';
-	return $html;
-}
-
-// get the existing value for a field if it exists
-function get_existing_field($fieldName){
-	$value = '';
-	if(isset($_POST['event'][$fieldName])){
-		$value = $_POST['event'][$fieldName];
-	} elseif(!empty($GLOBALS['eventToEdit'])){
-		$value = ($fieldName == 'start_date' || $fieldName == 'end_date') ? date('m/d/Y', $GLOBALS['eventToEdit'][$fieldName]->sec) : $GLOBALS['eventToEdit'][$fieldName];
-	}
-	return $value;
-}
+// pass in id, action, updatequery, insertquery
 
 // validate id
 if(!empty($id)){
-	try {
+	if(validateId($id)){
 		$mongoId = new MongoId($id);
 		$resp = MDB::find('event_project', array('_id'=>$mongoId));
 		if(!$resp['empty']){
-			$validId = true;
 			$eventToEdit = $resp['data']['rows'][0];
-		}
-	}	catch (MongoException $e) {
+		} 
+	} else {
 		die('<p>Invalid Id, please try again!</p><a href="events.php"><button> Try Again</button></a>');
-	}	
+	}
 }
 
+// delete
 if(isset($_POST['delete'])){
 	$resp = MDB::delete('event_project', array('_id'=>$mongoId));
 	if(!$resp['error']){
@@ -127,11 +91,6 @@ if(isset($_POST['delete'])){
 	} else {
 		$error_msgs[] = '<p>There was a problem deleting that record, please try again!</p>';	
 	}
-}
-
-// store all event category names into $event_category_names array for checkbox output
-foreach($event_categories as $category){
-	$event_category_names[] = $category['name'];
 }
 
 // validate required fields
