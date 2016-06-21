@@ -1,21 +1,47 @@
 <?php
 
-function generate_select( $fields, $inputName){
+/**
+ * generate_select()
+ *
+ * Returns a select element with specified option elements
+ *
+ * @access public
+ *
+ * @param array $fields
+ * @param string $inputName
+ * @param array $collectionOne
+ * @param array $collectionTwo
+ *
+ * @return $html
+ */
+function generate_select( $fields, $inputName, $collectionOne=array(), $collectionTwo=array()){
 	$html = '<select class="form-control" name="event['.$inputName.']"><option value="">Select One</option>';
-	$selected = '';
-	foreach($fields as $field){
-		if(isset($_POST['event'][$inputName]) && $_POST['event'][$inputName] == $field){
+	foreach($fields as $k=>$v){
+		$selected = '';
+		if(isset($collectionOne[$inputName]) && $collectionOne[$inputName] == $k){
 			$selected = 'selected="selected"';
-		} elseif(isset($GLOBALS['eventToEdit'][$inputName]) && $GLOBALS['eventToEdit'][$inputName] == $field){
+		} elseif(isset($collectionTwo[$inputName]) && $collectionTwo[$inputName] == $k){
 			$selected = 'selected="selected"';
 		}
-		$html .= "<option value='$field' $selected >$field</option>";
+		$html .= "<option value='$k' $selected >$v</option>";
 	}
 	$html .='</select>';
 
 	return $html;
 }
 
+/**
+ * generate_checkbox()
+ *
+ * Returns a checkbox input with a specified value attribute 
+ *
+ * @access public
+ *
+ * @param string $key
+ * @param string $value
+ *
+ * @return $html
+ */
 function generate_checkbox($key,$value){
 	$checked = '';
 	if(isset($_POST['event']['categories']) && in_array($key, $_POST['event']['categories'])){
@@ -27,7 +53,17 @@ function generate_checkbox($key,$value){
 	return $html;
 }
 
-// get the existing value for a field if it exists
+/**
+ * get_existing_field()
+ *
+ * Returns the existing value for a field if it exists
+ *
+ * @access public
+ *
+ * @param string $fieldName
+ *
+ * @return $value
+ */
 function get_existing_field($fieldName){
 	$value = '';
 	if(isset($_POST['event'][$fieldName])){
@@ -38,6 +74,18 @@ function get_existing_field($fieldName){
 	return $value;
 }
 
+
+/**
+ * validateId()
+ *
+ * Returns conditional boolean based on valid or invalid mongo id
+ *
+ * @access public
+ *
+ * @param string $id
+ *
+ * @return $valid
+ */
 function validateId($id){
 	$valid = true;
 	try {
@@ -49,6 +97,20 @@ function validateId($id){
 	return $valid;
 }
 
+/**
+ * save()
+ *
+ * Saves or updates a saved record in the db
+ *
+ * @access public
+ *
+ * @param string $collectionName
+ * @param obj $id
+ * @param string $action
+ * @param array $record
+ *
+ * @return $success
+ */
 function save($collectionName, $id, $action, $record){
 	$success = true;
 	
@@ -67,7 +129,20 @@ function save($collectionName, $id, $action, $record){
 	return $success;
 }
 
-function getAdminOptions($success, $records, $page){
+/**
+ * get_admin_options()
+ *
+ * Returns an html element containing edit and delete buttons for admin functionality
+ *
+ * @access public
+ *
+ * @param bool $success
+ * @param array $records
+ * @param string $page
+ *
+ * @return $html
+ */
+function get_admin_options($success, $records, $page){
 	$html = '<div>';
 	if(!$success){	
 		foreach($records as $record){
@@ -76,7 +151,6 @@ function getAdminOptions($success, $records, $page){
 			} else {
 				$html .= '<p>'. $record['name'].' <a href="'.$page.'?id='.$record['_id'].'"><button class="btn btn-primary">Edit</button></a> <a href="'.$page.'/delete?id='.$record['_id'].'"><button class="btn btn-danger">delete</button></a><br></p>';		
 			}
-			
 		}
 	}
 	$html .= '</div>';
