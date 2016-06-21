@@ -1,5 +1,5 @@
 <?php 
-// require and connect
+// required and connect
 
 $category = (isset($_POST['category'])) ? strtolower(htmlspecialchars(trim($_POST['category']))) : '';
 $errorMsgs = array();
@@ -11,9 +11,9 @@ $valid = true;
 $success = false;
 $validId= false;
 
-function _edit($id=''){
-	$actionUrl = empty($id) ? 'event_categories.php' : 'event_categories.php?id='.$GLOBALS['id'].'';
-	$header = !empty($id) ? '<h1>Edit Category</h1><hr>' : '<h1> Add Category </h1>';
+function _edit(){
+	$actionUrl = empty($GLOBALS['id']) ? 'event_categories.php' : 'event_categories.php?id='.$GLOBALS['id'].'';
+	$header = !empty($GLOBALS['id']) ? '<h1>Edit Category</h1><hr>' : '<h1> Save Category </h1>';
 	$value = (isset($GLOBALS['record']) && !$GLOBALS['success']) ? $GLOBALS['record']['name'] : '';
 	
 	print $header.'<div id="error_box">';
@@ -25,7 +25,7 @@ function _edit($id=''){
 	print '<form method="post" action="'.$actionUrl.'">'.
 					'<label>Category Name</label>'.
 					'<input class="form-control" type="text" name="category" value="'.$value.'"/>'.
-					'<button type="submit" class="btn btn-primary">Add</button>'.
+					'<button type="submit" class="btn btn-primary">Save</button>'.
 				'</form>';
 	}
 }
@@ -42,20 +42,51 @@ function _delete(){
 	}
 }
 
+function save($id, $category, $action){
+	$success = true;
+
+	// if id exists, update record
+	if(!empty($id) && $action != 'delete'){
+		$resp = MDB::update('event_categories', array('_id'=>$id), array('$set'=>array('name'=>$category)));
+	} elseif($action != 'delete') {
+		// default
+		$resp = MDB::insert('event_categories', array('name'=>$category));	
+	}
+	
+	if(isset($resp) && $resp['error']){
+		$errorMsgs[] = '<p>Could not add category, please try again</p>';
+	} else {
+	
+	return $success;
+	}
+}
 
 // validate id
 if(!empty($id)){
-	try {
+	if(validateId($id)){
 		$id = new MongoId($_GET['id']);
 		$resp = MDB::find('event_categories', array('_id'=>$id));
 		if(!$resp['empty']){
 			$validId = true;
 			$record = $resp['data']['rows'][0];
 		}
-	}	catch (MongoException $e) {
+	} else {
 		die('<p>Invalid Id, please try again!</p><a href="event_categories.php"><button> Try Again</button></a>');
-	}	
+	}
 }
+
+// delete
+if(isset($_POST['delete']) && $_POST['delete']){
+	if($action == 'delete'){
+		$resp = MDB::delete('event_categories', array('_id'=>$id));
+		if(!$resp['error']){
+			$success = true;
+		} else {
+			$errorMsgs[] = '<p>Could not delete category, please try again!</p>';	
+		}
+	}
+}
+
 
 // On post, be sure user provided a category
 if(empty($category) && isset($_POST['category']) && $action != 'delete'){
@@ -75,21 +106,7 @@ if(!empty($category) && $action != 'delete'){
 
 // if valid, perform action on db 
 if(($valid && !empty($category))  || ($action == 'delete' && isset($_POST['delete']))){
-	// if edit mode, edit record
-	if(!empty($id)){
-		$resp = MDB::update('event_categories', array('_id'=>$id), array('$set'=>array('name'=>$category)));
-	} elseif($action == 'delete'){
-		$resp = MDB::delete('event_categories', array('_id'=>$id));
-	} else {
-		// default
-		$resp = MDB::insert('event_categories', array('name'=>$category));	
-	}
-	
-	if($resp['error']){
-		$errorMsgs[] = '<p>Could not add category, please try again</p>';
-	} else {
-		$success = true;	
-	}
+	$success = save($id,$category,$action);
 } 
 ?>
 
@@ -115,15 +132,15 @@ if(($valid && !empty($category))  || ($action == 'delete' && isset($_POST['delet
 		<div class="row">
 			<div class="col-md-6 col-md-offset-3">
 <?php
+if(!$success){
 	foreach($categories['data']['rows'] as $category){
 		print $category['name'].' <a href="event_categories.php?id='.$category['_id'].'"><button class="btn btn-primary">Edit</button></a> <a href="event_categories.php/delete?id='.$category['_id'].'"><button class="btn btn-danger">delete</button></a><br>';	
 	}
+}
 ?>
 
 <?php
-if($validId && $action != 'delete'){
-	_edit($id);
-} elseif($validId && $action == 'delete'){
+if($validId && $action == 'delete'){
 	_delete();
 } else {
 	_edit();	
