@@ -13,6 +13,7 @@ $id = (isset($_GET['id'])) ? $_GET['id'] : '';
 $eventToEdit = '';
 $valid = true;
 $success = false;
+$collectionName = 'event_project';
 
 function _edit(){
 	if($GLOBALS['success'] == true){
@@ -51,24 +52,6 @@ function _delete(){
 		print '<button class="btn btn-primary">Cancel</button>';
 	}
 }
-
-function save($record){
-	// update
-	if(!empty($GLOBALS['id'])){
-		$resp = MDB::update('event_project', array('_id'=>$GLOBALS['mongoId']), array('$set'=>$record));
-	} else {
-	// default
-		$resp = MDB::insert('event_project', $record);
-	}
-	
-	if(!$resp['error']){
-		$GLOBALS['success'] = true;
-	} else {
-		$GLOBALS['error_msgs'][] = '<p>Something went wrong when saving, please try again!</p>';	
-	}
-}
-
-// pass in id, action, updatequery, insertquery
 
 // validate id
 if(!empty($id)){
@@ -121,7 +104,12 @@ if ($valid && isset($_POST['event'])){
 	
 	// save data
 	if (isset($_POST['event']) && $valid){
-		save($newRecord);
+		$idToQuery = isset($mongoId) ? $mongoId : $id;
+		$success = save($collectionName,$idToQuery, $action, $newRecord);
+		
+		if(!$success){
+			$error_msgs[] = '<p>There was a problem saving the record, please try again!</p>';	
+		}
 	}	
 }
 
